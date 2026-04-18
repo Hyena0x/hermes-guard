@@ -1,0 +1,35 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Local editor / tool noise
+.idea/
+.vscode/
+.hermes/
+
+# Hermes Guard runtime state (filelock files next to grants YAML)
+*.yaml.lock
+
+# Local Hermes config dir — ignore runtime state but not plans/docs
+.hermes/plugins/
+.hermes/guard/

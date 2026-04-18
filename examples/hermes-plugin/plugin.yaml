@@ -1,0 +1,5 @@
+name: hermes_guard
+version: 0.1.0
+description: Hermes Guard pre-tool policy plugin
+provides_hooks:
+  - pre_tool_call

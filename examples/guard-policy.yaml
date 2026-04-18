@@ -1,0 +1,32 @@
+version: 1
+
+defaults:
+  global:
+    read: deny
+    write: deny
+    patch: deny
+    execute: confirm
+
+channels:
+  cli:
+    read: allow
+    write: confirm
+    patch: confirm
+    execute: confirm
+  telegram:
+    read: confirm
+    write: deny
+    patch: deny
+    execute: deny
+
+rules:
+  - id: allow-workspace-cli
+    action: [read, write, patch, execute]
+    channel: [cli]
+    path: "/path/to/workspace/**"
+    effect: allow
+    except:
+      - "/path/to/workspace/.env*"
+      - "/path/to/workspace/**/.env*"
+      - "/path/to/workspace/secrets/**"
+      - "/path/to/workspace/**/secrets/**"
