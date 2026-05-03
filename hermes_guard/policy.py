@@ -11,7 +11,6 @@ from hermes_guard.path_rules import canonicalize_path
 from hermes_guard.policy_store import load_policy
 from hermes_guard.terminal_policy import terminal_verdict
 
-
 TOOL_ACTIONS = {
     'read_file': 'read',
     'write_file': 'write',
@@ -42,8 +41,15 @@ def evaluate_policy(
 
     config = load_policy(policy_path)
     target_path = _extract_target_path(tool_name, args)
+    if tool_name == 'terminal' and not target_path:
+        return PolicyDecision(
+            decision=Decision.CONFIRM,
+            rule_id='terminal-policy:missing-workdir',
+            reason='Terminal command requires explicit confirmation because no workdir was provided.',
+            metadata={'channel': channel, 'action': action},
+        )
     if not target_path:
-        return _default_decision(config, channel, action)
+        return _default_decision(config, channel, action, session_id=session_id)
 
     canonical_path = canonicalize_path(target_path)
     if tool_name == 'terminal':
@@ -52,6 +58,7 @@ def evaluate_policy(
             channel=channel,
             canonical_path=canonical_path,
             action=action,
+            session_id=session_id,
         )
         if terminal_decision is not None:
             return terminal_decision
@@ -78,7 +85,12 @@ def evaluate_policy(
             decision=Decision.CONFIRM,
             rule_id=rule.id,
             reason=f'Explicit confirmation required for {canonical_path}',
-            next_step=_build_grant_command(channel=channel, action=action, canonical_path=canonical_path),
+            next_step=_build_grant_command(
+                channel=channel,
+                action=action,
+                canonical_path=canonical_path,
+                session_id=session_id,
+            ),
             metadata={'path': canonical_path, 'channel': channel, 'action': action},
         )
     if matching_grants:
@@ -98,7 +110,7 @@ def evaluate_policy(
             metadata={'path': canonical_path, 'channel': channel, 'action': action},
         )
 
-    return _default_decision(config, channel, action, canonical_path=canonical_path)
+    return _default_decision(config, channel, action, canonical_path=canonical_path, session_id=session_id)
 
 
 def _extract_target_path(tool_name: str, args: dict) -> str | None:
@@ -108,7 +120,7 @@ def _extract_target_path(tool_name: str, args: dict) -> str | None:
 
 
 def _evaluate_terminal_constraints(
-    *, command: str, channel: str, canonical_path: str, action: str
+    *, command: str, channel: str, canonical_path: str, action: str, session_id: str | None
 ) -> PolicyDecision | None:
     verdict, reason = terminal_verdict(command, channel=channel)
     if verdict == 'allow':
@@ -117,7 +129,12 @@ def _evaluate_terminal_constraints(
         decision=Decision.CONFIRM,
         rule_id=f'terminal-policy:{reason}',
         reason=f'Terminal command requires explicit confirmation for {canonical_path}',
-        next_step=_build_grant_command(channel=channel, action=action, canonical_path=canonical_path),
+        next_step=_build_grant_command(
+            channel=channel,
+            action=action,
+            canonical_path=canonical_path,
+            session_id=session_id,
+        ),
         metadata={'path': canonical_path, 'channel': channel, 'action': action},
     )
 
@@ -183,7 +200,7 @@ def _matching_grants(
             continue
         if channel not in grant.channels and '*' not in grant.channels:
             continue
-        if grant.lifetime == 'session' and grant.session_id != session_id:
+        if grant.lifetime == 'session' and (not grant.session_id or grant.session_id != session_id):
             continue
         if not _path_matches(canonical_path, grant.path):
             continue
@@ -192,13 +209,24 @@ def _matching_grants(
     return matches
 
 
-def _build_grant_command(*, channel: str, action: str, canonical_path: str) -> str:
+def _build_grant_command(
+    *, channel: str, action: str, canonical_path: str, session_id: str | None
+) -> str:
     path_segment = f' --path "{canonical_path}"' if canonical_path else ''
-    return f'guard grant --channel {channel} --action {action}{path_segment} --lifetime session'
+    if session_id:
+        return (
+            f'guard grant --channel {channel} --action {action}{path_segment}'
+            f' --lifetime session --session-id "{session_id}"'
+        )
+    return f'guard grant --channel {channel} --action {action}{path_segment} --lifetime persistent'
 
 
 def _default_decision(
-    config: PolicyConfig, channel: str, action: str, canonical_path: str = ''
+    config: PolicyConfig,
+    channel: str,
+    action: str,
+    canonical_path: str = '',
+    session_id: str | None = None,
 ) -> PolicyDecision:
     channel_defaults = config.channel_defaults.get(channel, {})
     if action in channel_defaults:
@@ -208,7 +236,12 @@ def _default_decision(
             rule_id=f'channel-default:{channel}:{action}',
             reason=f'Channel default applied for {channel}:{action}',
             next_step=(
-                _build_grant_command(channel=channel, action=action, canonical_path=canonical_path)
+                _build_grant_command(
+                    channel=channel,
+                    action=action,
+                    canonical_path=canonical_path,
+                    session_id=session_id,
+                )
                 if decision == Decision.CONFIRM
                 else None
             ),
@@ -223,7 +256,12 @@ def _default_decision(
             rule_id=f'global-default:{action}',
             reason=f'Global default applied for {action}',
             next_step=(
-                _build_grant_command(channel=channel, action=action, canonical_path=canonical_path)
+                _build_grant_command(
+                    channel=channel,
+                    action=action,
+                    canonical_path=canonical_path,
+                    session_id=session_id,
+                )
                 if decision == Decision.CONFIRM
                 else None
             ),

@@ -44,7 +44,8 @@ See `docs/local-hermes-integration.md` for the full local integration walkthroug
 
 ```bash
 # grants
-.venv/bin/guard grant --channel cli --action write --path "/tmp/demo.txt" --lifetime session --grants-path "$HOME/.hermes/guard-grants.yaml"
+.venv/bin/guard grant --channel cli --action write --path "/tmp/demo.txt" --lifetime persistent --grants-path "$HOME/.hermes/guard-grants.yaml"
+.venv/bin/guard grant --channel cli --action write --path "/tmp/demo.txt" --lifetime session --session-id "<session-id>" --grants-path "$HOME/.hermes/guard-grants.yaml"
 .venv/bin/guard grants --grants-path "$HOME/.hermes/guard-grants.yaml"
 .venv/bin/guard revoke --id <grant-id> --grants-path "$HOME/.hermes/guard-grants.yaml"
 

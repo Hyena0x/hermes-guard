@@ -119,3 +119,26 @@ rules:
 
     assert decision.decision == Decision.CONFIRM
     assert decision.rule_id == 'terminal-policy:non-cli'
+
+
+def test_terminal_policy_confirms_when_workdir_is_missing(tmp_path):
+    policy_path = tmp_path / 'guard-policy.yaml'
+    policy_path.write_text(
+        '''version: 1
+
+defaults:
+  global:
+    execute: allow
+''',
+        encoding='utf-8',
+    )
+
+    decision = evaluate_policy(
+        tool_name='terminal',
+        args={'command': 'git status'},
+        channel='cli',
+        policy_path=policy_path,
+    )
+
+    assert decision.decision == Decision.CONFIRM
+    assert decision.rule_id == 'terminal-policy:missing-workdir'

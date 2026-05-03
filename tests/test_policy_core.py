@@ -149,6 +149,7 @@ channels:
     assert 'guard grant' in (decision.next_step or '')
     assert '--channel telegram' in (decision.next_step or '')
     assert '--action read' in (decision.next_step or '')
+    assert '--lifetime persistent' in (decision.next_step or '')
 
 
 def test_confirm_rule_includes_actionable_next_step(tmp_path):
@@ -191,6 +192,7 @@ rules:
     assert '--channel cli' in decision.next_step
     assert '--action write' in decision.next_step
     assert str(target) in decision.next_step
+    assert '--lifetime persistent' in decision.next_step
 
 
 def test_persistent_grant_allows_path_when_policy_default_denies(tmp_path):
@@ -263,6 +265,46 @@ defaults:
         policy_path=policy_path,
         grants_path=grants_path,
         session_id='other-session',
+    )
+
+    assert decision.decision == Decision.DENY
+    assert decision.rule_id == 'global-default:read'
+
+
+def test_session_grant_without_session_id_is_ignored(tmp_path):
+    policy_path = tmp_path / 'guard-policy.yaml'
+    policy_path.write_text(
+        '''version: 1
+
+defaults:
+  global:
+    read: deny
+''',
+        encoding='utf-8',
+    )
+    grants_path = tmp_path / 'guard-grants.yaml'
+    target = tmp_path / 'project' / 'notes.txt'
+    target.parent.mkdir(parents=True)
+    target.write_text('hello', encoding='utf-8')
+    grants_path.write_text(
+        '''version: 1
+grants:
+  - id: malformed-session-grant
+    action: [read]
+    channel: [cli]
+    path: "''' + str(tmp_path / 'project' / '**') + '''"
+    effect: allow
+    lifetime: session
+''',
+        encoding='utf-8',
+    )
+
+    decision = evaluate_policy(
+        tool_name='read_file',
+        args={'path': str(target)},
+        channel='cli',
+        policy_path=policy_path,
+        grants_path=grants_path,
     )
 
     assert decision.decision == Decision.DENY

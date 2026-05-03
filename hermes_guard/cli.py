@@ -63,14 +63,18 @@ def main(argv: Sequence[str] | None = None, *, stdout: TextIO | None = None) -> 
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     if args.command == 'grant':
-        grant = add_grant(
-            Path(args.grants_path) if args.grants_path else None,
-            action=args.action,
-            channel=args.channel,
-            target_path=args.path,
-            lifetime=args.lifetime,
-            session_id=args.session_id,
-        )
+        try:
+            grant = add_grant(
+                Path(args.grants_path) if args.grants_path else None,
+                action=args.action,
+                channel=args.channel,
+                target_path=args.path,
+                lifetime=args.lifetime,
+                session_id=args.session_id,
+            )
+        except ValueError as exc:
+            print(str(exc), file=stream)
+            return 1
         print(
             f'Grant created: {grant.id}  {grant.actions[0]}  {grant.channels[0]}  {grant.path}  ({grant.lifetime})',
             file=stream,

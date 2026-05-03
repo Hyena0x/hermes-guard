@@ -5,7 +5,6 @@ import yaml
 from hermes_guard.models import Decision
 from hermes_guard.policy import evaluate_policy
 
-
 EXAMPLE_POLICY = Path(__file__).resolve().parents[1] / 'examples' / 'guard-policy.yaml'
 
 
@@ -18,21 +17,15 @@ def _materialize_example_policy(tmp_path):
     policy_path.write_text(rendered, encoding='utf-8')
     return policy_path, workspace
 
-
-
 def test_example_policy_uses_generic_workspace_path():
     data = yaml.safe_load(EXAMPLE_POLICY.read_text(encoding='utf-8'))
 
     assert data['rules'][0]['path'] == '/path/to/workspace/**'
 
-
-
 def test_example_policy_includes_execute_in_workspace_rule():
     data = yaml.safe_load(EXAMPLE_POLICY.read_text(encoding='utf-8'))
 
     assert 'execute' in data['rules'][0]['action']
-
-
 
 def test_example_policy_allows_safe_terminal_in_workspace(tmp_path):
     policy_path, workspace = _materialize_example_policy(tmp_path)
@@ -46,8 +39,6 @@ def test_example_policy_allows_safe_terminal_in_workspace(tmp_path):
     )
 
     assert decision.decision == Decision.ALLOW
-
-
 
 def test_example_policy_denies_env_files_inside_workspace(tmp_path):
     policy_path, workspace = _materialize_example_policy(tmp_path)

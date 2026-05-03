@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from hermes_guard.plugin_entry import register
 
 

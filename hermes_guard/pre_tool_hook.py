@@ -9,7 +9,6 @@ from __future__ import annotations
 from hermes_guard.models import Decision, PolicyDecision
 from hermes_guard.policy import evaluate_policy
 
-
 ERROR_DECISION = PolicyDecision(
     decision=Decision.CONFIRM,
     rule_id='guard-internal-error',

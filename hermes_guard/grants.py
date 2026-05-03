@@ -76,6 +76,9 @@ def add_grant(
     lifetime: str,
     session_id: str | None = None,
 ) -> GrantRecord:
+    if lifetime == 'session' and not session_id:
+        raise ValueError('Session grants require --session-id. Use --lifetime persistent when no stable session id is available.')
+
     grant = GrantRecord(
         id=f'grant-{uuid4().hex[:12]}',
         actions=(action,),

@@ -85,3 +85,24 @@ def test_guard_revoke_returns_nonzero_for_missing_grant(tmp_path):
 
     assert exit_code == 1
     assert 'Grant not found' in output.getvalue()
+
+
+def test_guard_grant_rejects_session_grant_without_session_id(tmp_path):
+    grants_path = tmp_path / 'guard-grants.yaml'
+    output = StringIO()
+
+    exit_code = main(
+        [
+            'grant',
+            '--channel', 'cli',
+            '--action', 'read',
+            '--path', '/tmp/demo.txt',
+            '--lifetime', 'session',
+            '--grants-path', str(grants_path),
+        ],
+        stdout=output,
+    )
+
+    assert exit_code == 1
+    assert load_grants(grants_path) == []
+    assert 'Session grants require --session-id' in output.getvalue()

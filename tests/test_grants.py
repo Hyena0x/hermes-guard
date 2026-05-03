@@ -1,3 +1,5 @@
+import pytest
+
 from hermes_guard.grants import add_grant, load_grants, revoke_grant
 
 
@@ -35,3 +37,16 @@ def test_revoke_grant_removes_entry(tmp_path):
 
     assert removed is True
     assert grants == []
+
+
+def test_add_grant_rejects_session_grant_without_session_id(tmp_path):
+    grants_path = tmp_path / 'guard-grants.yaml'
+
+    with pytest.raises(ValueError, match='Session grants require --session-id'):
+        add_grant(
+            grants_path,
+            action='read',
+            channel='cli',
+            target_path='/tmp/demo.txt',
+            lifetime='session',
+        )

@@ -146,7 +146,8 @@ To demo the `confirm` → `grant` flow explicitly, remove `write` or `patch` fro
 .venv/bin/guard grants --grants-path "$HOME/.hermes/guard-grants.yaml"
 
 # Create a grant
-.venv/bin/guard grant --channel cli --action write --path "/path/to/hermes-guard/SPEC.md" --lifetime session --grants-path "$HOME/.hermes/guard-grants.yaml"
+.venv/bin/guard grant --channel cli --action write --path "/path/to/hermes-guard/SPEC.md" --lifetime persistent --grants-path "$HOME/.hermes/guard-grants.yaml"
+.venv/bin/guard grant --channel cli --action write --path "/path/to/hermes-guard/SPEC.md" --lifetime session --session-id "<session-id>" --grants-path "$HOME/.hermes/guard-grants.yaml"
 
 # Revoke a grant
 .venv/bin/guard revoke --id <grant-id> --grants-path "$HOME/.hermes/guard-grants.yaml"
@@ -191,7 +192,7 @@ Update manager:
 
 - `HERMES_GUARD_GRANTS_PATH` must point to the same file used by the CLI
 - The grant channel must match the running channel
-- Session grants require the same `session_id`
+- Session grants require `--session-id` at creation time and the same runtime `session_id` during policy evaluation
 
 ### Update commands do not work
 
